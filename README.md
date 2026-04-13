@@ -1,73 +1,70 @@
-# React + TypeScript + Vite
+# Flow Metrics Forecasting Tool
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A browser-based flow metrics dashboard that connects to Jira Cloud to surface cycle time, WIP age, throughput, and epic delivery forecasts using Monte Carlo simulation.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Cycle Time** — average, median, and 85th percentile (SLE) across completed items
+- **WIP Age** — tracks how long in-progress items have been active using changelog-based start dates
+- **Throughput** — count of items completed in a configurable date range
+- **Epic Forecasting** — delivery estimates based on historical epic sizes and Monte Carlo simulation
+- **Confidence-Based Forecast** — probability distribution of completion dates at best/likely/worst case
+- **Custom JQL** — query by project key or write your own JQL
+- **Filters** — toggle issue types and statuses in/out of all metrics
 
-## React Compiler
+## Prerequisites
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Node.js 18+
+- A Jira Cloud account with API access
+- A Jira API token — generate one at https://id.atlassian.com/manage-profile/security/api-tokens
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/blynchbitovi/Flow-Metrics-Tool.git
+   cd Flow-Metrics-Tool
+   ```
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+3. **Configure environment variables**
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+   Copy the `.env` file template and fill in your credentials:
+   ```bash
+   cp .env .env.local
+   ```
+   Open `.env.local` and set:
+   - `VITE_JIRA_EMAIL` — your Jira login email
+   - `VITE_JIRA_API_TOKEN` — your API token
+   - `VITE_JIRA_SITE_URL` — your Jira site URL (e.g. `https://your-org.atlassian.net`)
+
+4. **Start the dev server**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+## Usage
+
+### Simple Mode
+Enter a **Project Key** (e.g. `PLAT`) and a **Cycle Time Range** in days, then click **Get Metrics**. The tool will fetch all in-progress and recently completed items for that project.
+
+### Custom Mode
+Switch to **Custom** in the configuration panel and enter any valid JQL query. Your query should include both in-progress and done items to populate all metrics, for example:
+```
+project = PLAT AND statusCategory in ("In Progress", Done) AND updatedDate >= -60d
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### How Dates Are Calculated
+In-progress dates are derived from the Jira changelog — specifically the **last transition from a To Do status into an In Progress status**. This means accidental starts that were reverted don't affect your metrics.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Tech Stack
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- [React](https://react.dev) + [TypeScript](https://www.typescriptlang.org)
+- [Vite](https://vitejs.dev) (dev server + proxy for Jira API)
+- [Tailwind CSS](https://tailwindcss.com)
+- Jira Cloud REST API v3
