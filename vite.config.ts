@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
         '/api/jira': {
           target: env.VITE_JIRA_SITE_URL,
           changeOrigin: true,
+          secure: false,
           rewrite: (path) => path.replace(/^\/api\/jira/, ''),
         },
       },
